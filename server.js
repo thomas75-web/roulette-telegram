@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const path = require("path");
 const { Telegraf, Markup } = require("telegraf");
 const app = express();
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -69,6 +70,10 @@ bot.on("successful_payment", async (ctx) => {
     ])
   );
 });
+app.use(express.static("public"));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+})
 app.post("/api/spin", (req, res) => {
   const userId = req.body.userId;
   if (!spinsPayes[userId]) {
