@@ -86,9 +86,9 @@ app.post("/api/spin", (req, res) => {
 });
 if (!process.env.VERCEL) {
   app.listen(3000, () => {
-    console.log("Site roulette lancé sur [http://localhost:3000")]http://localhost:3000");
+    console.log("Site lancé localement");
+    bot.launch();
+    console.log("Bot lancé !");
   });
-  bot.launch();
-  console.log("Bot lancé !");
 }
 module.exports = app;
