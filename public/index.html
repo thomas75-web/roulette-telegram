@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roulette Promo</title>
+<style>
+body {
+  margin: 0;
+  background: radial-gradient(circle, #222, #050505);
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+.container {
+  padding-top: 40px;
+}
+h1 {
+  font-size: 32px;
+}
+.wheel-box {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  margin: 30px auto;
+}
+.pointer {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 0;
+  height: 0;
+  border-left: 22px solid transparent;
+  border-right: 22px solid transparent;
+  border-top: 45px solid gold;
+}
+#wheel {
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  border: 8px solid gold;
+  transition: transform 5s cubic-bezier(0.15, 0.8, 0.2, 1);
+  box-shadow: 0 0 35px gold;
+}
+button {
+  background: gold;
+  color: black;
+  font-size: 22px;
+  font-weight: bold;
+  padding: 16px 28px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.5;
+}
+#result {
+  margin-top: 25px;
+  font-size: 28px;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎰 Roulette Promo</h1>
+  <div class="wheel-box">
+    <div class="pointer"></div>
+    <canvas id="wheel" width="340" height="340"></canvas>
+  </div>
+  <button id="spinBtn">🎡 Lancer la roulette</button>
+  <div id="result"></div>
+</div>
+<script>
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const segments = [
+  { label: "0%", value: 0, color: "#2c2c2c" },
+  { label: "5%", value: 5, color: "#27ae60" },
+  { label: "10%", value: 10, color: "#2980b9" },
+  { label: "20%", value: 20, color: "#f1c40f" },
+  { label: "30%", value: 30, color: "#e67e22" },
+  { label: "50%", value: 50, color: "#c0392b" }
+];
+const size = 340;
+const center = size / 2;
+const radius = 160;
+const angle = (2 * Math.PI) / segments.length;
+let spinning = false;
+function drawWheel() {
+  for (let i = 0; i < segments.length; i++) {
+    ctx.beginPath();
+    ctx.moveTo(center, center);
+    ctx.arc(center, center, radius, i * angle, (i + 1) * angle);
+    ctx.fillStyle = segments[i].color;
+    ctx.fill();
+    ctx.save();
+    ctx.translate(center, center);
+    ctx.rotate(i * angle + angle / 2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "white";
+    ctx.font = "bold 28px Arial";
+    ctx.fillText("-" + segments[i].label, radius - 25, 10);
+    ctx.restore();
+  }
+  ctx.beginPath();
+  ctx.arc(center, center, 40, 0, Math.PI * 2);
+  ctx.fillStyle = "black";
+  ctx.fill();
+  ctx.fillStyle = "gold";
+  ctx.font = "bold 18px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("SPIN", center, center + 6);
+}
+function getRotationForGain(gain) {
+  const index = segments.findIndex(segment => segment.value === gain);
+  const segmentAngle = 360 / segments.length;
+  const segmentCenter = index * segmentAngle + segmentAngle / 2;
+  const pointerAngle = 270;
+  return 360 * 8 + pointerAngle - segmentCenter;
+}
+async function spin() {
+  if (spinning) return;
+  spinning = true;
+  document.getElementById("spinBtn").disabled = true;
+  document.getElementById("result").innerHTML = "🎡 La roue tourne...";
+  const response = await fetch("/api/spin", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+  const data = await response.json();
+  const gain = data.gain;
+  const rotation = getRotationForGain(gain);
+  canvas.style.transform = `rotate(${rotation}deg)`;
+  setTimeout(() => {
+    document.getElementById("result").innerHTML =
+  `🎉 Gain : -${gain}%<br>🎁 Code promo : ${data.code}`;
+    spinning = false;
+    document.getElementById("spinBtn").disabled = false;
+  }, 5200);
+}
+drawWheel();
+document.getElementById("spinBtn").addEventListener("click", spin);
+</script>
+</body>
+</html>
