@@ -77,21 +77,10 @@ app.get("/", (req, res) => {
   app.post("/api/spin", (req, res) => {
   const gain = choisirGain();
   const code = prendreCodePromo(gain);
+
   res.json({
     gain,
     code
-  });
-  const gain = choisirGain();
-  const code = prendreCodePromo(gain);
-  res.json({
-    gain,
-    code
-  });
-if (!process.env.VERCEL) {
-  app.listen(3000, () => {
-    console.log("Site lancé localement");
-    bot.launch();
-    console.log("Bot lancé !");
   });
 });
 module.exports = app;
