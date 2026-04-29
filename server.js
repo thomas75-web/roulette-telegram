@@ -74,26 +74,24 @@ app.use(express.static("public"));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 })
-app.post("/api/spin", (req, res) => {
-  const userId = req.body.userId;
-  if (!spinsPayes[userId]) {
-    return res.status(403).json({
-      error: "Tu dois payer avant de lancer la roulette."
-    });
-  }
-  spinsPayes[userId] = false;
+  app.post("/api/spin", (req, res) => {
   const gain = choisirGain();
   const code = prendreCodePromo(gain);
   res.json({
     gain,
     code
   });
-});
+  const gain = choisirGain();
+  const code = prendreCodePromo(gain);
+  res.json({
+    gain,
+    code
+  });
 if (!process.env.VERCEL) {
   app.listen(3000, () => {
     console.log("Site lancé localement");
     bot.launch();
     console.log("Bot lancé !");
   });
-}
+});
 module.exports = app;
