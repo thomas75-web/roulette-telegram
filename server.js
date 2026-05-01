@@ -83,4 +83,11 @@ app.get("/", (req, res) => {
     code
   });
 });
+if (!process.env.VERCEL) {
+  app.listen(3000, () => {
+    console.log("Site lancé localement");
+  });
+  bot.launch();
+  console.log("Bot lancé !");
+}
 module.exports = app;
