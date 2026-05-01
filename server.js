@@ -1,11 +1,14 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
+const crypto = require("crypto");
 const { Telegraf, Markup } = require("telegraf");
 const app = express();
-const bot = new Telegraf(process.env.BOT_TOKEN);
-app.use(express.static("public"));
 app.use(express.json());
+app.use(express.static("public"));
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const WEBAPP_URL = process.env.WEBAPP_URL;
+const bot = new Telegraf(BOT_TOKEN);
 const codesPromo = {
   0: ["ROUE0-A111", "ROUE0-B222", "ROUE0-C333"],
   5: ["ROUE5-A111", "ROUE5-B222", "ROUE5-C333"],
@@ -14,7 +17,7 @@ const codesPromo = {
   30: ["ROUE30-A111", "ROUE30-B222", "ROUE30-C333"],
   50: ["ROUE50-A111", "ROUE50-B222", "ROUE50-C333"]
 };
-const spinsPayes = {};
+const spinsValides = new Set();
 function choisirGain() {
   const lots = [
     { reduction: 0, chance: 60 },
@@ -22,7 +25,7 @@ function choisirGain() {
     { reduction: 10, chance: 6 },
     { reduction: 20, chance: 4 },
     { reduction: 30, chance: 3 },
-    { reduction: 50, chance: 2 },
+    { reduction: 50, chance: 2 }
   ];
   let total = lots.reduce((sum, lot) => sum + lot.chance, 0);
   let tirage = Math.random() * total;
@@ -40,7 +43,7 @@ function prendreCodePromo(gain) {
 }
 bot.start((ctx) => {
   ctx.reply(
-    "Bienvenue sur la roulette promo !\n\n Prix : 250 Stars.\n Gains possibles : 0%, 5%, 10%, 20%, 30%, 50%.",
+    "🎰 Bienvenue sur Roulette Promo VIP\n\n⭐ Prix : 250 Stars\n🎁 Gains possibles : 0%, 5%, 10%, 20%, 30%, 50%",
     Markup.inlineKeyboard([
       [Markup.button.callback("⭐ Acheter un spin", "acheter_spin")]
     ])
@@ -61,29 +64,37 @@ bot.on("pre_checkout_query", (ctx) => {
   ctx.answerPreCheckoutQuery(true);
 });
 bot.on("successful_payment", async (ctx) => {
-  const userId = ctx.from.id;
-  spinsPayes[userId] = true;
+  const spinToken = crypto.randomUUID();
+  spinsValides.add(spinToken);
   await ctx.reply(
-    "✅ Paiement validé ! Tu peux maintenant ouvrir la roulette.",
+    "✅ Paiement validé ! Clique pour ouvrir la roulette.",
     Markup.inlineKeyboard([
-      Markup.button.webApp("Ouvrir la roulette", "http://localhost:3000")
+      [Markup.button.webApp("🎡 Ouvrir la roulette", `${WEBAPP_URL}?spin=${spinToken}`)]
     ])
   );
 });
-app.use(express.static("public"));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
-})
-  app.post("/api/spin", (req, res) => {
+});
+app.post("/api/spin", (req, res) => {
+  const { spinToken } = req.body;
+  if (!spinToken || !spinsValides.has(spinToken)) {
+    return res.status(403).json({
+      error: "Tu dois payer avant de lancer la roulette."
+    });
+  }
+  spinsValides.delete(spinToken);
   const gain = choisirGain();
   const code = prendreCodePromo(gain);
-
   res.json({
     gain,
     code
   });
 });
-if (!process.env.VERCEL) {
+if (process.env.VERCEL) {
+  app.use(bot.webhookCallback(`/telegram/${BOT_TOKEN}`));
+  bot.telegram.setWebhook(`${WEBAPP_URL}/telegram/${BOT_TOKEN}`);
+} else {
   app.listen(3000, () => {
     console.log("Site lancé localement");
   });
