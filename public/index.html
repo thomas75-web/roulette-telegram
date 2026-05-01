@@ -127,12 +127,31 @@ async function spin() {
   spinning = true;
   document.getElementById("spinBtn").disabled = true;
   document.getElementById("result").innerHTML = "🎡 La roue tourne...";
-  const response = await fetch("/api/spin", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    }
-  });
+  const params = new URLSearchParams(window.location.search);
+const spinToken = params.get("spin");
+if (!spinToken) {
+  document.getElementById("result").innerHTML =
+    "❌ Tu dois payer dans Telegram avant de lancer la roulette.";
+  spinning = false;
+  document.getElementById("spinBtn").disabled = false;
+  return;
+}
+const response = await fetch("/api/spin", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    spinToken: spinToken
+  })
+});
+if (!response.ok) {
+  document.getElementById("result").innerHTML =
+    "❌ Spin déjà utilisé ou paiement non valide.";
+  spinning = false;
+  document.getElementById("spinBtn").disabled = false;
+  return;
+}
   const data = await response.json();
   const gain = data.gain;
   const rotation = getRotationForGain(gain);
