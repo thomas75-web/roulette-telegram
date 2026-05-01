@@ -40,9 +40,9 @@ function prendreCodePromo(gain) {
 }
 bot.start((ctx) => {
   ctx.reply(
-    "🎡 Bienvenue sur la roulette promo !\n\nPrix : 250 Stars.\nGains possibles : 0%, 5%, 10%, 20%, 30%, 50%.",
+    "Bienvenue sur la roulette promo !\n\n Prix : 250 Stars.\n Gains possibles : 0%, 5%, 10%, 20%, 30%, 50%.",
     Markup.inlineKeyboard([
-      Markup.button.callback("⭐ Acheter un spin", "acheter_spin")
+      [Markup.button.callback("⭐ Acheter un spin", "acheter_spin")]
     ])
   );
 });
